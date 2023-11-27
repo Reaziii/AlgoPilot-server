@@ -7,7 +7,7 @@ import ContestProblemModel from "../models/contestProblem";
 import { addDateAndTime, get_current_time } from "./../utils/utils";
 import ContestSubmissionModel from "../models/contestSubmission";
 import { JudgeServers } from "./judgeserver";
-import { IContest, IContestProblem, IProblem } from "../types/main";
+import { IContest, IContestAuthors, IContestProblem, IProblem } from "../types/main";
 // import { submitacode } from "./socket";
 
 export const create_contest = async (name: string | undefined, date: string | undefined, time: string | undefined, length: string | undefined, announcement: string | undefined, description: string | undefined, authors: string | undefined, email: string | undefined): Promise<{ status: boolean, message: string, slug?: string }> => {
@@ -238,42 +238,38 @@ export const get_problems = async (contest: string, email: string): Promise<{ pr
 }
 
 
-// export const all_published_contest = async (): Promise<{ contests: IContest[] }> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let contest: IContest[] = await ContestModel.find({ published: true });
-//         contest = contest.sort((a: IContest, b: IContest) => {
-//             if (addDateAndTime(a.date, a.time).getTime() > addDateAndTime(b.date, b.time).getTime()) {
-//                 return 1;
-//             }
-//             return 0;
-//         })
-//         return { contests: contest }
-//     } catch (err) {
-//         return { contests: [] };
-//     }
-// }
+export const all_published_contest = async (): Promise<{ contests: IContest[] }> => {
+    try {
+        let contest: IContest[] = await ContestModel.find({ published: true });
+        contest = contest.sort((a: IContest, b: IContest) => {
+            if (addDateAndTime(a.date, a.time).getTime() > addDateAndTime(b.date, b.time).getTime()) {
+                return 1;
+            }
+            return 0;
+        })
+        return { contests: contest }
+    } catch (err) {
+        return { contests: [] };
+    }
+}
 
-// export const my_contests = async (email: string): Promise<{ contests: IContest[] }> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let __contest: IContestAuthors[] = await AuthorModel.find({ email: email });
-//         let _slugs: string[] = __contest.map(item => item.slug);
-//         let contest: IContest[] = await ContestModel.find({ slug: { $in: _slugs } });
-//         contest = contest.sort((a: IContest, b: IContest) => {
-//             if (addDateAndTime(a.date, a.time).getTime() < addDateAndTime(b.date, b.time).getTime()) {
-//                 return 1;
-//             }
-//             return -1;
-//         })
-//         return { contests: contest }
-//     } catch (err) {
-//         console.log(err);
-//         return { contests: [] };
-//     }
-// }
+export const my_contests = async (email: string): Promise<{ contests: IContest[] }> => {
+    try {
+        let __contest: IContestAuthors[] = await AuthorModel.find({ email: email });
+        let _slugs: string[] = __contest.map(item => item.slug);
+        let contest: IContest[] = await ContestModel.find({ slug: { $in: _slugs } });
+        contest = contest.sort((a: IContest, b: IContest) => {
+            if (addDateAndTime(a.date, a.time).getTime() < addDateAndTime(b.date, b.time).getTime()) {
+                return 1;
+            }
+            return -1;
+        })
+        return { contests: contest }
+    } catch (err) {
+        console.log(err);
+        return { contests: [] };
+    }
+}
 
 
 

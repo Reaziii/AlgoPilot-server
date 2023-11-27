@@ -1,8 +1,7 @@
 import express, { Request, Response } from 'express'
 import authcheck from '../middlewares/authcheck';
-import { AuthenticatedRequest, IProblem } from '../types/main';
-import { add_problem, create_contest, getContestDetails, get_problems, hasContestPermission } from '../lib/contest';
-import AuthorModel from '../models/author';
+import { AuthenticatedRequest, IContest, IProblem } from '../types/main';
+import { add_problem, all_published_contest, create_contest, getContestDetails, get_problems, hasContestPermission, my_contests } from '../lib/contest';
 import addauthtorequest from '../middlewares/addauthtorequest';
 
 const router = express.Router();
@@ -29,8 +28,15 @@ router.get("/getproblems/:slug", addauthtorequest, (req: AuthenticatedRequest, r
 })
 
 router.post("/addproblems/:slug", authcheck, (req: AuthenticatedRequest, res: Response<{ status: boolean }>) => {
-    console.log(req.body.problems)
     add_problem(req.params.slug, req.user?.email ?? "", req.body.problems).then(result => res.send({ status: result }))
+})
+
+router.get("/published", (req: Request, res: Response<{ contests: IContest[] }>) => {
+    all_published_contest().then(result => res.send(result))
+})
+
+router.get("/my", authcheck, (req: AuthenticatedRequest, res: Response<{ contests: IContest[] }>) => {
+    my_contests(req.user?.email ?? "").then(result => res.send(result))
 })
 
 export default router;
