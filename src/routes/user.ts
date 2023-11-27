@@ -1,9 +1,11 @@
 
 import express, { Request, Response } from 'express'
 import UserModel from '../models/user';
-import { AuthenticatedRequest, IPermission, IToken } from '../types/main';
+import { AuthenticatedRequest, IPermission, IToken, IUser } from '../types/main';
 import jwt from 'jsonwebtoken'
 import authcheck from '../middlewares/authcheck';
+import admincheck from '../middlewares/admincheck';
+import { DeleteUser, get_all_users, updateUsersPermission } from '../lib/user';
 const router = express.Router();
 router.post("/check", async (req: Request, res: Response<IToken>) => {
     try {
@@ -54,5 +56,18 @@ router.post("/checkforauthors", authcheck, async (req: AuthenticatedRequest, res
 })
 
 
+
+router.post("/getallusers", admincheck, (req: AuthenticatedRequest, res: Response<{ users: IUser[] }>) => {
+    get_all_users(req.body.limit, req.body.start, req.body.email).then(result => res.send(result))
+})
+
+router.put("/updatepermission", admincheck, (req: Request, res: Response<boolean>) => {
+    updateUsersPermission(req.body.item, req.body.email).then(result => res.send(result))
+})
+
+
+router.delete("/:email", admincheck, (req: Request, res: Response) => {
+    DeleteUser(req.params.email).then(result => res.send(result))
+})
 
 export default router;

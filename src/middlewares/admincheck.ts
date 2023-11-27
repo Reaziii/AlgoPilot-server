@@ -10,7 +10,7 @@ export default async (req: AuthenticatedRequest, res: Response, next: NextFuncti
         }
         let user = jwt.verify(token, process.env.TOKENSECRET ?? "HELLO") as { name: string; email: string; permission: IPermission };
         let check = await UserModel.findOne({ email: user.email });
-        if (!check) throw "";
+        if (!check || !check.permission.admin) throw "";
         req.user = {
             name: check.name, email: check.email, permission: check.permission
         }

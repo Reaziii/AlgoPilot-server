@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import authcheck from '../middlewares/authcheck';
-import { AuthenticatedRequest, IContest, IProblem } from '../types/main';
-import { add_problem, all_published_contest, create_contest, getContestDetails, get_problems, hasContestPermission, my_contests } from '../lib/contest';
+import { AuthenticatedRequest, IContest, IProblem, ITestcase } from '../types/main';
+import { add_problem, all_published_contest, changePublishMoode, checkImAuthor, create_contest, getContestDetails, getContestSatus, get_authors, get_contest_problem_details, get_problems, handleDeleteContest, hasContestPermission, my_contests, update_contest } from '../lib/contest';
 import addauthtorequest from '../middlewares/addauthtorequest';
 
 const router = express.Router();
@@ -37,6 +37,36 @@ router.get("/published", (req: Request, res: Response<{ contests: IContest[] }>)
 
 router.get("/my", authcheck, (req: AuthenticatedRequest, res: Response<{ contests: IContest[] }>) => {
     my_contests(req.user?.email ?? "").then(result => res.send(result))
+})
+
+router.get("/checkiamauthor/:slug", authcheck, (req: AuthenticatedRequest, res: Response<{ status: boolean }>) => {
+    checkImAuthor(req.params.slug, req.user?.email ?? "..").then(result => res.send(result))
+})
+
+router.get("/conteststatus/:slug", (req: Request, res: Response<"running" | "finished" | "upcoming" | "error">) => {
+    getContestSatus(req.params.slug).then(result => res.send(result))
+})
+
+router.get("/changepublish/:slug", authcheck, (req: AuthenticatedRequest, res: Response<Boolean>) => {
+    changePublishMoode(req.params.slug, req.user?.email ?? "..").then(result => res.send(result))
+})
+
+router.delete("/:slug", authcheck, (req: AuthenticatedRequest, res: Response<Boolean>) => {
+    handleDeleteContest(req.params.slug, req.user?.email ?? "..").then(result => res.send(result))
+})
+
+router.get("/getauthors/:slug", (req: Request, res: Response) => {
+    get_authors(req.params.slug).then(result => res.send(result))
+})
+
+router.put("/:slug", authcheck, (req: AuthenticatedRequest, res: Response<{ status: boolean, message: string, slug?: string }>) => {
+    update_contest(req.params.slug, req.body.name, req.body.date, req.body.time, req.body.length, req.body.announcement, req.body.description, req.body.authors, req.user?.email ?? "").then(result => {
+        res.send(result)
+    })
+})
+
+router.get("/problemdetails/:slug/:position", (req: Request, res: Response<{ status: boolean, problem?: IProblem, test_cases?: ITestcase[] }>) => {
+    get_contest_problem_details(req.params.slug, parseInt(req.params.position)).then(result => res.send(result));
 })
 
 export default router;

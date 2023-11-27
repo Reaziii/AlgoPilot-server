@@ -7,7 +7,8 @@ import ContestProblemModel from "../models/contestProblem";
 import { addDateAndTime, get_current_time } from "./../utils/utils";
 import ContestSubmissionModel from "../models/contestSubmission";
 import { JudgeServers } from "./judgeserver";
-import { IContest, IContestAuthors, IContestProblem, IProblem } from "../types/main";
+import { IContest, IContestAuthors, IContestProblem, IProblem, ITestcase } from "../types/main";
+import { get_sample_test_case } from "./testcase";
 // import { submitacode } from "./socket";
 
 export const create_contest = async (name: string | undefined, date: string | undefined, time: string | undefined, length: string | undefined, announcement: string | undefined, description: string | undefined, authors: string | undefined, email: string | undefined): Promise<{ status: boolean, message: string, slug?: string }> => {
@@ -60,69 +61,50 @@ export const create_contest = async (name: string | undefined, date: string | un
 }
 
 
-// export const update_contest = async (slug: string, formdata: FormData): Promise<{ status: boolean, message: string, slug?: string }> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn) throw "";
-//         const token = await useToken();
-//         if (!token.isLoogedIn) {
-//             return { status: false, message: "Unauthorized" }
-//         }
+export const update_contest = async (slug: string, name: string | undefined, date: string | undefined, time: string | undefined, length: string | undefined, announcement: string | undefined, description: string | undefined, authors: string | undefined, email: string): Promise<{ status: boolean, message: string, slug?: string }> => {
 
+    try {
+        let ret = await checkImAuthor(slug, email);
+        if (ret.status === false) {
+            return { status: false, message: "Unauthorized" }
+        }
+        if (!name || !name.length || !date || !date.length || !time || !time.length || !length || !length.length) {
+            return { status: false, message: "Some fields are empty" };
+        }
+        let contest = await ContestModel.findOne({ slug });
+        if (!contest) throw "";
+        contest.name = name;
+        contest.slug = slug;
+        contest.len = length;
+        contest.date = date;
+        contest.time = time;
+        contest.announcement = announcement ?? "";
+        contest.description = description ?? "";
+        await contest.save();
+        let prevauthors = await get_authors(slug);
+        for (let i = 0; i < prevauthors.length; i++) {
+            await (await AuthorModel.findOne({ slug, email: prevauthors[i].email }))?.deleteOne();
+        }
+        let _authors: string[] = authors?.replace(new RegExp(" ", 'g'), "").split(',') || [];
+        _authors.push(contest.createdBy)
+        for (let i = 0; i < _authors.length; i++) {
+            let Author = await UserModel.findOne({ email: _authors[i] });
+            if (!Author) continue;
+            let __ = await AuthorModel.findOne({ email: _authors[i], slug: slug });
+            if (__) continue;
+            let newAuthor = new AuthorModel({
+                slug,
+                email: _authors[i],
+            });
+            await newAuthor.save();
+        }
+        return { status: true, message: "Contest created Successfully", slug }
 
-//         let name: string | null = formdata.get("contestname") as string | null;
-//         let date: string | null = formdata.get("date") as string | null;
-//         let time: string | null = formdata.get("time") as string | null;
-//         let length: string | null = formdata.get("length") as string | null;
-//         let announcement: string | null = formdata.get("announcement") as string | null;
-//         let description: string | null = formdata.get("description") as string | null;
-//         let authors: string | null = formdata.get("authors") as string | null;
-//         if (!name || !name.length || !date || !date.length || !time || !time.length || !length || !length.length) {
-//             return { status: false, message: "Some fields are empty" };
-//         }
-
-
-//         let contest = await ContestModel.findOne({ slug });
-//         if (!contest) throw "";
-//         contest.name = name;
-//         contest.slug = slug;
-//         contest.len = length;
-//         contest.date = date;
-//         contest.time = time;
-//         contest.announcement = announcement ?? "";
-//         contest.description = description ?? "";
-//         await contest.save();
-
-
-//         let prevauthors = await get_authors(slug);
-//         for (let i = 0; i < prevauthors.length; i++) {
-//             await (await AuthorModel.findOne({ slug, email: prevauthors[i].email }))?.deleteOne();
-//         }
-
-
-
-//         let _authors: string[] = authors?.replaceAll(" ", "").split(',') || [];
-//         _authors.push(contest.createdBy)
-//         for (let i = 0; i < _authors.length; i++) {
-//             let Author = await UserModel.findOne({ email: _authors[i] });
-//             if (!Author) continue;
-//             let __ = await AuthorModel.findOne({ email: _authors[i], slug: slug });
-//             if (__) continue;
-//             let newAuthor = new AuthorModel({
-//                 slug,
-//                 email: _authors[i],
-//             });
-//             await newAuthor.save();
-//         }
-//         return { status: true, message: "Contest created Successfully", slug }
-
-//     }
-//     catch (err) {
-//         console.log(err)
-//         return { status: false, message: "Unknown error" }
-//     }
-// }
-
+    }
+    catch (err) {
+        return { status: false, message: "Unknown error" }
+    }
+}
 
 export const getContestDetails = async (slug: string): Promise<{ status: boolean, details?: IContest }> => {
     try {
@@ -140,22 +122,16 @@ export const getContestDetails = async (slug: string): Promise<{ status: boolean
 
 
 
-// export const checkImAuthor = async (slug: string): Promise<{ status: boolean }> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn) throw "";
-//         let token = await useToken();
-//         if (!token.isLoogedIn) throw "";
+export const checkImAuthor = async (slug: string, email: string): Promise<{ status: boolean }> => {
+    try {
+        let _ = await AuthorModel.findOne({ slug: slug, email: email });
+        if (!_) return { status: false }
+        return { status: true }
 
-//         let _ = await AuthorModel.findOne({ slug: slug, email: token.email });
-//         if (!_) return { status: false }
-
-//         return { status: true }
-
-//     } catch (err) {
-//         return { status: false }
-//     }
-// }
+    } catch (err) {
+        return { status: false }
+    }
+}
 
 export const add_problem = async (contest: string, email: string, problems: { slug: string, position: number }[]): Promise<boolean> => {
     try {
@@ -288,98 +264,90 @@ export const my_contests = async (email: string): Promise<{ contests: IContest[]
 // // }
 
 
-// export const changePublishMoode = async (slug: string): Promise<Boolean> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let token = await useToken();
-//         if (!token.isLoogedIn) throw "";
-//         let author = await AuthorModel.findOne({ slug, email: token.email });
-//         if (!author) throw "";
-//         let contest = await ContestModel.findOne({ slug });
-//         if (!contest) throw "";
-//         contest.published = !contest.published;
-//         await contest.save();
-//         return true;
+export const changePublishMoode = async (slug: string, email: string): Promise<Boolean> => {
+    try {
+        let author = await AuthorModel.findOne({ slug, email: email });
+        if (!author) throw "";
+        let contest = await ContestModel.findOne({ slug });
+        if (!contest) throw "";
+        contest.published = !contest.published;
+        await contest.save();
+        return true;
 
-//     } catch (err) {
-//         return false;
-//     }
-// }
+    } catch (err) {
+        return false;
+    }
+}
 
-// export const handleDeleteContest = async (slug: string): Promise<Boolean> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let token = await useToken();
-//         if (!token.isLoogedIn) throw "";
-//         let author = await AuthorModel.findOne({ email: token.email, slug });
-//         if (!author) throw "";
-//         let contest = await ContestModel.findOne({ slug });
-//         if (!contest) throw "";
-//         await contest.deleteOne();
-//         let authors = await AuthorModel.find({ slug });
-//         for (let i = 0; i < authors.length; i++) {
-//             await authors[i].deleteOne();
-//         }
-//         let problems = await ContestProblemModel.find({ contestSlug: slug });
-//         for (let i = 0; i < problems.length; i++) {
-//             await problems[i].deleteOne();
-//         }
+export const handleDeleteContest = async (slug: string, email: string): Promise<Boolean> => {
+    try {
+        let author = await AuthorModel.findOne({ email: email, slug });
+        if (!author) throw "";
+        let contest = await ContestModel.findOne({ slug });
+        if (!contest) throw "";
+        await contest.deleteOne();
+        let authors = await AuthorModel.find({ slug });
+        for (let i = 0; i < authors.length; i++) {
+            await authors[i].deleteOne();
+        }
+        let problems = await ContestProblemModel.find({ contestSlug: slug });
+        for (let i = 0; i < problems.length; i++) {
+            await problems[i].deleteOne();
+        }
 
-//         return true;
+        return true;
 
-//     }
-//     catch (err) {
-//         return false;
-//     }
-// }
+    }
+    catch (err) {
+        return false;
+    }
+}
 
 
-// export const get_authors = async (slug: string): Promise<IContestAuthors[]> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let authors: IContestAuthors[] = await AuthorModel.find({ slug });
-//         return authors;
-//     }
-//     catch (err) {
-//         return []
-//     }
-// }
+export const get_authors = async (slug: string): Promise<IContestAuthors[]> => {
+    try {
+        let authors: IContestAuthors[] = await AuthorModel.find({ slug });
+        return authors;
+    }
+    catch (err) {
+        return []
+    }
+}
 
-// export const getContestSatus = async (slug: string): Promise<"running" | "finished" | "upcoming" | "error"> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let contest = await ContestModel.findOne({ slug });
-//         if (!contest) throw "";
-//         let nowTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
-//         let contestTime = addDateAndTime(contest.date, contest.time);
-//         if (contestTime.getTime() > nowTime.getTime()) {
-//             return "upcoming"
-//         }
-//         let endTime = new Date(contestTime.getTime() + (parseInt(contest.len) * 60 * 1000));
-//         if (nowTime.getTime() > endTime.getTime()) return "finished";
-//         return "running"
-//     }
-//     catch (err) {
-//         return "error"
-//     }
-// }
+export const getContestSatus = async (slug: string): Promise<"running" | "finished" | "upcoming" | "error"> => {
+    console.log(slug)
+    try {
+        let contest = await ContestModel.findOne({ slug });
+        if (!contest) throw "";
+        let nowTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+        let contestTime = addDateAndTime(contest.date, contest.time);
+        if (contestTime.getTime() > nowTime.getTime()) {
+            return "upcoming"
+        }
+        let endTime = new Date(contestTime.getTime() + (parseInt(contest.len) * 60 * 1000));
+        if (nowTime.getTime() > endTime.getTime()) return "finished";
+        return "running"
+    }
+    catch (err) {
+        return "error"
+    }
+}
 
 
-// export const get_contest_problem_slug = async (slug: string, position: number): Promise<string | null> => {
-//     try {
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "";
-//         let problem = await ContestProblemModel.findOne({ position, contestSlug: slug });
-//         if (!problem) throw "";
-//         return problem.problemSlug;
-//     } catch (err) {
-//         return null;
-//     }
-// }
+export const get_contest_problem_details = async (slug: string, position: number): Promise<{ status: boolean, problem?: IProblem, test_cases?: ITestcase[] }> => {
+    try {
+        let problem = await ContestProblemModel.findOne({ position, contestSlug: slug });
+        if (!problem) throw "";
+        let _problem = await ProblemModel.findOne({ slug: problem.problemSlug });
+        if (!_problem) throw "";
+        _problem.customChecker = ""
+        _problem.enableCustomChecker = false;
+        let testcases = (await get_sample_test_case(_problem.slug)).test_cases;
+        return { problem: _problem, status: true, test_cases: testcases };
+    } catch (err) {
+        return { status: false };
+    }
+}
 
 // export const submit_solution_contest = async (slug: string, position: number, problemslug: string, formdata: FormData): Promise<{ status: boolean, submission?: IContestSubmission, id?: string }> => {
 //     try {
