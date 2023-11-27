@@ -8,6 +8,9 @@
     "esModuleInterop": true,
     
   },
-  "include": ["src/**/*.ts"],
+  "files": [
+    "src/types/main.d.ts"
+  ],
+  "include": ["src/**/*.ts", "src/types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }
