@@ -7,8 +7,9 @@ import ContestProblemModel from "../models/contestProblem";
 import { addDateAndTime, get_current_time } from "./../utils/utils";
 import ContestSubmissionModel from "../models/contestSubmission";
 import { JudgeServers } from "./judgeserver";
-import { IContest, IContestAuthors, IContestProblem, IProblem, ITestcase } from "../types/main";
+import { IContest, IContestAuthors, IContestProblem, IContestSubmission, IProblem, ITestcase } from "../types/main";
 import { get_sample_test_case } from "./testcase";
+import { submitACode } from "./submission";
 // import { submitacode } from "./socket";
 
 export const create_contest = async (name: string | undefined, date: string | undefined, time: string | undefined, length: string | undefined, announcement: string | undefined, description: string | undefined, authors: string | undefined, email: string | undefined): Promise<{ status: boolean, message: string, slug?: string }> => {
@@ -315,7 +316,6 @@ export const get_authors = async (slug: string): Promise<IContestAuthors[]> => {
 }
 
 export const getContestSatus = async (slug: string): Promise<"running" | "finished" | "upcoming" | "error"> => {
-    console.log(slug)
     try {
         let contest = await ContestModel.findOne({ slug });
         if (!contest) throw "";
@@ -349,40 +349,36 @@ export const get_contest_problem_details = async (slug: string, position: number
     }
 }
 
-// export const submit_solution_contest = async (slug: string, position: number, problemslug: string, formdata: FormData): Promise<{ status: boolean, submission?: IContestSubmission, id?: string }> => {
-//     try {
-//         let code = formdata.get("code");
-//         let language = formdata.get("language");
-//         if (!code || !language) throw "code | language didn't found";
-//         let conn = await connectDB();
-//         if (!conn.connected) throw "db connection failed";
-//         let token = await useToken();
-//         if (!token.isLoogedIn) throw "not loged in";
-//         let contest = await ContestModel.findOne({ slug });
-//         if (!contest) throw "";
-//         let status = await getContestSatus(slug);
-//         if (status !== "running" && status !== "finished") throw "not started";
-//         let problem = await ProblemModel.findOne({ slug: problemslug });
-//         if (!problem) throw "prblem not found";
-//         let __problem = await ContestProblemModel.findOne({ contestSlug: slug, problemSlug: problemslug, position });
-//         if (!__problem) throw "problem is not in contest";
-//         let submission = await submitACode(code as string, language as string, problem.slug);
-//         if (!submission) {
-//             throw "submission failed"
-//         }
-//         let _submission = new ContestSubmissionModel({
-//             contsetSlug: slug,
-//             position: position,
-//             submission_id: submission,
-//             user: token.email
-//         });
-//         await _submission.save();
-//         JudgeServers.addNewSubmission(submission, slug);
-//         // submitacode(slug);
-//         return { status: true, id: submission }
+export const submit_contest_problem_solution = async (slug: string, position: number, code: string | null, language: string | null, email: string): Promise<{ status: boolean, submission?: IContestSubmission, id?: string }> => {
+    try {
+        if (!code || !language) throw "code | language didn't found";
+        let contest = await ContestModel.findOne({ slug });
+        if (!contest) throw "";
+        let status = await getContestSatus(slug);
+        if (status !== "running" && status !== "finished") throw "not started";
+        let temp = await ContestProblemModel.findOne({ contestSlug: slug, position: position });
+        if (!temp) throw "";
+        let problem = await ProblemModel.findOne({ slug: temp?.problemSlug });
+        if (!problem) throw "prblem not found";
+        let __problem = await ContestProblemModel.findOne({ contestSlug: slug, problemSlug: temp.problemSlug, position });
+        if (!__problem) throw "problem is not in contest";
+        let submission = await submitACode(code as string, language as string, problem.slug, email);
+        if (!submission) {
+            throw "submission failed"
+        }
+        let _submission = new ContestSubmissionModel({
+            contsetSlug: slug,
+            position: position,
+            submission_id: submission,
+            user: email
+        });
+        await _submission.save();
+        JudgeServers.addNewSubmission(submission, slug);
+        // submitacode(slug);
+        return { status: true, id: submission }
 
-//     } catch (err) {
-//         console.log(err);
-//         return { status: false };
-//     }
-// }
+    } catch (err) {
+        console.log(err);
+        return { status: false };
+    }
+}

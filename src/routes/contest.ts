@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import authcheck from '../middlewares/authcheck';
 import { AuthenticatedRequest, IContest, IProblem, ITestcase } from '../types/main';
-import { add_problem, all_published_contest, changePublishMoode, checkImAuthor, create_contest, getContestDetails, getContestSatus, get_authors, get_contest_problem_details, get_problems, handleDeleteContest, hasContestPermission, my_contests, update_contest } from '../lib/contest';
+import { add_problem, all_published_contest, changePublishMoode, checkImAuthor, create_contest, getContestDetails, getContestSatus, get_authors, get_contest_problem_details, get_problems, handleDeleteContest, hasContestPermission, my_contests, submit_contest_problem_solution, update_contest } from '../lib/contest';
 import addauthtorequest from '../middlewares/addauthtorequest';
 
 const router = express.Router();
@@ -67,6 +67,10 @@ router.put("/:slug", authcheck, (req: AuthenticatedRequest, res: Response<{ stat
 
 router.get("/problemdetails/:slug/:position", (req: Request, res: Response<{ status: boolean, problem?: IProblem, test_cases?: ITestcase[] }>) => {
     get_contest_problem_details(req.params.slug, parseInt(req.params.position)).then(result => res.send(result));
+})
+
+router.post("/submit/:slug/:position", authcheck, (req: AuthenticatedRequest, res: Response) => {
+    submit_contest_problem_solution(req.params.slug, parseInt(req.params.position), req.body.code, req.body.language, req.user?.email ?? "").then(result => res.send(result))
 })
 
 export default router;

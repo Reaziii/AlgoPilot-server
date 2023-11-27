@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import userRoute from './routes/user'
 import problemRoute from './routes/problem'
 import contestRoute from './routes/contest'
+import submissionRoute from './routes/submission'
 // app
 const app = express();
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/auth", authRouter)
 app.use("/user", userRoute)
 app.use("/problem", problemRoute)
 app.use("/contest", contestRoute)
+app.use('/submission', submissionRoute)
 
 
 const server = http.createServer(app);
