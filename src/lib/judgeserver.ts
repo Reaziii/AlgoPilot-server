@@ -44,8 +44,10 @@ export const addNewServerTokens = async (servers: IJudgeServerToken[]): Promise<
                 })
             } catch (err) { }
         }
+
         return ret;
     } catch (err) {
+        console.log(err);
         return [];
     }
 }

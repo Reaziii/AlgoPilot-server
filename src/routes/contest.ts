@@ -3,7 +3,8 @@ import authcheck from '../middlewares/authcheck';
 import { AuthenticatedRequest, IContest, IProblem, ITestcase } from '../types/main';
 import { add_problem, all_published_contest, changePublishMoode, checkImAuthor, create_contest, getContestDetails, getContestSatus, get_authors, get_contest_problem_details, get_problems, handleDeleteContest, hasContestPermission, my_contests, submit_contest_problem_solution, update_contest } from '../lib/contest';
 import addauthtorequest from '../middlewares/addauthtorequest';
-
+import { addNewServerTokens, deleteAServer, getAllServerOfAContest } from '../lib/judgeserver';
+import jwt from 'jsonwebtoken'
 const router = express.Router();
 
 router.post("/create", authcheck, (req: AuthenticatedRequest, res: Response) => {
@@ -71,6 +72,42 @@ router.get("/problemdetails/:slug/:position", (req: Request, res: Response<{ sta
 
 router.post("/submit/:slug/:position", authcheck, (req: AuthenticatedRequest, res: Response) => {
     submit_contest_problem_solution(req.params.slug, parseInt(req.params.position), req.body.code, req.body.language, req.user?.email ?? "").then(result => res.send(result))
+})
+
+
+router.post("/judgeserver/:slug", authcheck, async (req: AuthenticatedRequest, res: Response) => {
+    let check = await checkImAuthor(req.params.slug, req.user?.email ?? "")
+    if (!check.status) {
+        return res.status(404).send(null);
+    }
+    let token = jwt.sign({ slug: req.params.slug, name: req.body.pcname }, process.env.TOKENSECRET ?? "HELLO");
+    let xxx = await addNewServerTokens([{
+        name: req.body.pcname,
+        token,
+        slug: req.params.slug,
+        status: false
+    }]);
+    if (xxx.length !== 0) {
+        xxx[0].id = String(xxx[0].id);
+        return res.send(xxx[0])
+    }
+    res.send(null)
+})
+router.get("/judgeserver/:slug", authcheck, async (req: AuthenticatedRequest, res: Response) => {
+    let check = await checkImAuthor(req.params.slug, req.user?.email ?? "")
+    if (!check.status) {
+        return res.status(404).send(null);
+    }
+    getAllServerOfAContest(req.params.slug).then(result => res.send(result))
+})
+
+
+router.delete("/judgeserver/:slug/:id", authcheck, async (req: AuthenticatedRequest, res: Response) => {
+    let check = await checkImAuthor(req.params.slug, req.user?.email ?? "")
+    if (!check.status) {
+        return res.status(404).send(null);
+    }
+    deleteAServer(req.params.id).then(result => res.send(result))
 })
 
 export default router;
