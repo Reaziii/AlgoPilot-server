@@ -120,4 +120,15 @@ export interface AuthenticatedRequest extends Request {
         permission: IPermission;
         name: string;
     };
+    judge?: {
+        slug: string;
+        name: string;
+    }
+}
+
+export interface ISubmissionQueue {
+    submission : string;
+    time : number;
+    slug:string;
+    running:boolean;
 }

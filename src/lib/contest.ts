@@ -10,6 +10,8 @@ import { JudgeServers } from "./judgeserver";
 import { IContest, IContestAuthors, IContestProblem, IContestSubmission, IProblem, ITestcase } from "../types/main";
 import { get_sample_test_case } from "./testcase";
 import { submitACode } from "./submission";
+import judgeservers from "../sockets/judgeservers";
+import { addNewSubmissionToQueue } from "./submissionQueue";
 // import { submitacode } from "./socket";
 
 export const create_contest = async (name: string | undefined, date: string | undefined, time: string | undefined, length: string | undefined, announcement: string | undefined, description: string | undefined, authors: string | undefined, email: string | undefined): Promise<{ status: boolean, message: string, slug?: string }> => {
@@ -374,7 +376,8 @@ export const submit_contest_problem_solution = async (slug: string, position: nu
         });
         await _submission.save();
         JudgeServers.addNewSubmission(submission, slug);
-        // submitacode(slug);
+        await addNewSubmissionToQueue(slug, submission)
+        judgeservers.requestFromFreeServer(slug);
         return { status: true, id: submission }
 
     } catch (err) {

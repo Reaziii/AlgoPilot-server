@@ -78,7 +78,7 @@ router.post("/submit/:slug/:position", authcheck, (req: AuthenticatedRequest, re
 router.post("/judgeserver/:slug", authcheck, async (req: AuthenticatedRequest, res: Response) => {
     let check = await checkImAuthor(req.params.slug, req.user?.email ?? "")
     if (!check.status) {
-        return res.status(404).send(null);
+        return res.status(404).send({ status: false });
     }
     let token = jwt.sign({ slug: req.params.slug, name: req.body.pcname }, process.env.TOKENSECRET ?? "HELLO");
     let xxx = await addNewServerTokens([{
@@ -89,9 +89,9 @@ router.post("/judgeserver/:slug", authcheck, async (req: AuthenticatedRequest, r
     }]);
     if (xxx.length !== 0) {
         xxx[0].id = String(xxx[0].id);
-        return res.send(xxx[0])
+        return res.send({ data: xxx[0], status: true })
     }
-    res.send(null)
+    res.send({ status: false })
 })
 router.get("/judgeserver/:slug", authcheck, async (req: AuthenticatedRequest, res: Response) => {
     let check = await checkImAuthor(req.params.slug, req.user?.email ?? "")

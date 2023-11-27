@@ -9,6 +9,9 @@ import userRoute from './routes/user'
 import problemRoute from './routes/problem'
 import contestRoute from './routes/contest'
 import submissionRoute from './routes/submission'
+import { Server } from 'socket.io'
+import judgeservers from './sockets/judgeservers';
+import judgeRoutes from './routes/judgeserver'
 // app
 const app = express();
 dotenv.config();
@@ -33,12 +36,24 @@ app.use("/user", userRoute)
 app.use("/problem", problemRoute)
 app.use("/contest", contestRoute)
 app.use('/submission', submissionRoute)
+app.use('/judge', judgeRoutes)
+
 
 
 const server = http.createServer(app);
+
+
+
 app.get('/', (req: Request, res: Response) => {
     res.send('Judge server is running!');
 });
+
+
+//sockets
+const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'], }, });
+judgeservers.addServerIO(io)
+
+
 server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
