@@ -12,6 +12,12 @@ router.post("/", judgecheck, (req: AuthenticatedRequest, res: Response) => {
 })
 
 
+router.post("/verdict/:subid/:tcid", (req:AuthenticatedRequest, res:Response)=>{
+    console.log(req.body)
+    return res.status(200).send({success : true})
+
+})
+
 
 
 export default router;

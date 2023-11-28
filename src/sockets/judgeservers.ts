@@ -10,7 +10,6 @@ class _Socket {
     private wanttoknowstatus: { [token: string]: Socket[] } = {};
     public static getInstance(): _Socket {
         if (_Socket.instance === undefined) {
-            console.log("creating new instance of _Socket");
             _Socket.instance = new _Socket();
         }
         return _Socket.instance;
@@ -35,7 +34,6 @@ class _Socket {
         this.online[token] = value;
     }
     public addClientSocket = (token: string, socket: Socket) => {
-        console.log("new client socket added")
         if (!Array.isArray(this.wanttoknowstatus[token])) this.wanttoknowstatus[token] = [];
         this.wanttoknowstatus[token].push(socket);
         this._types[socket.id] = "client"
@@ -57,7 +55,7 @@ class _Socket {
         }
     }
     public printStatus = () => {
-        console.log(Object.keys(this.sockets).length)
+        // console.log(Object.keys(this.sockets).length)
     }
 
     public requestFromFreeServer = (slug:string)=>{

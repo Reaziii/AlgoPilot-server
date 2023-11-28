@@ -20,7 +20,7 @@ export const addNewSubmissionToQueue = async (contsetSlugslug: string, sub_id: s
     }
 }
 
-export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status: boolean, submission?: { code: string, testcases: ITestcase[], checker: string, enable: boolean, sub_id: string } }> => {
+export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status: boolean, submission?: { code: string, testcases: { input: string, output: string, id: string }[], checker: string, enable: boolean, sub_id: string, timelimit: string, memorylimit: string, language: string } }> => {
     try {
         let lastsub = await SubmissionQueueModel.findOne({ slug, running: false }).sort("-time").exec();
         if (!lastsub) throw "";
@@ -28,7 +28,11 @@ export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status
         if (!submission) throw "";
         let problem = await ProblemModel.findOne({ slug: submission.problemSlug });
         if (!problem) throw "";
-        let test_cases: ITestcase[] = await TestcaseModel.find({ slug: slug });
+        let test_cases: { input: string, output: string, id: string }[] = (await TestcaseModel.find({ slug: submission.problemSlug })).map(item => ({
+            input: item.input,
+            output: item.output,
+            id: item._id
+        }));
         lastsub.running = true;
         await lastsub.save();
         setTimeout(async () => {
@@ -45,7 +49,11 @@ export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status
                 testcases: test_cases,
                 checker: problem.customChecker,
                 enable: problem.enableCustomChecker,
-                sub_id: submission._id
+                sub_id: submission._id,
+                timelimit: problem.timelimit,
+                memorylimit: problem.memorylimit,
+                language: submission.language
+
             }
         }
     } catch (err) {
