@@ -27,7 +27,6 @@ export const handleRegistration = async (email: string | undefined, password: st
         await sendVerficationCode(email, otp, name);
         return { status: true, message: "Otp has been sended!" };
     } catch (err) {
-        console.log(err);
         return { status: false, message: "something went wrong" }
     }
 }
@@ -52,7 +51,6 @@ export const verifyEmail = async (email: string | undefined, otp: string | undef
 
     }
     catch (err) {
-        console.log(err);
         return { status: false, message: "Unknown error" }
     }
 }
@@ -77,7 +75,6 @@ export const handleLogin = async (email: string | undefined, password: string | 
         return { status: true, message: "Login successfull", token }
 
     } catch (err) {
-        console.log(err);
         return { status: false, message: "Unknown error" }
     }
 }

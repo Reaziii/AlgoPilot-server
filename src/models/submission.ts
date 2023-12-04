@@ -24,9 +24,24 @@ let schema = new mongoose.Schema<ISubmission & mongoose.Document>({
         required: true,
     },
     status: {
-        type: { status: Number, text: String, color: String },
+        type: { status: Number, text: String, color: String, time:Number, memory:Number },
         required: true
-    }
+    },
+    testcases: {
+        type: [{ status: Number, text: String, color: String, tcid: String, time:Number, memory:Number }],
+        default: [],
+        required: true
+    },
+    memory: {
+        type: Number,
+        default: 0,
+        required: true,
+    },
+    time: {
+        type: Number,
+        default: 0,
+        required: true,
+    },
 })
 
 const SubmissionModel: mongoose.Model<ISubmission & mongoose.Document> = mongoose.models.submission || mongoose.model("submission", schema);

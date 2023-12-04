@@ -55,12 +55,17 @@ class _Socket {
         }
     }
     public printStatus = () => {
-        // console.log(Object.keys(this.sockets).length)
     }
 
     public requestFromFreeServer = (slug:string)=>{
         this.sockets[slug]?.map(item=>{
             item.emit("areyoufree", "request")
+        })
+    }
+
+    public bitTheHeart = ()=>{
+        Object.keys(this.sockets).forEach(item=>{
+            this.requestFromFreeServer(item);
         })
     }
 

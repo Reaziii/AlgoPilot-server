@@ -4,24 +4,30 @@ import { SubmittedStatus } from "../utils/enum";
 import SubmissionModel from "../models/submission";
 import ContestSubmissionModel from "../models/contestSubmission";
 import { IProblem, ISubmission } from "../types/main";
+import TestcaseModel from "../models/testcase";
 export const submitACode = async (code: string, language: string, problemSlug: string, email: string): Promise<string | null> => {
     try {
         let time = get_current_time();
         let problem = await ProblemModel.findOne({ slug: problemSlug });
         if (!problem) throw "Problem doesn't exists - " + problemSlug;
-
+        let testcases = await TestcaseModel.find({ slug: problem.slug })
         let submission = new SubmissionModel({
             code,
             language,
             problemSlug,
             user: email,
             submission_time: time,
-            status: SubmittedStatus.Pending
+            status: SubmittedStatus.Pending,
+            testcases: testcases.map(item => ({
+                ...SubmittedStatus.Pending,
+                tcid: item._id,
+                time : 0,
+                memory : 0
+            }))
         })
         await submission.save();
         return submission.id;
     } catch (err) {
-        console.log(err);
         return null
     }
 }
@@ -34,7 +40,6 @@ export const submissionDetails = async (id: string, email: string): Promise<{ st
         if (!problem) throw "problem not found";
         return { status: true, problem, submission }
     } catch (errs) {
-        console.log(errs)
         return { status: false };
     }
 }

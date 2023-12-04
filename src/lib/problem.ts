@@ -64,7 +64,6 @@ export const create_problem = async (name: string | undefined, statement: string
         return { status: true, message: "problem created successfully", problem: newProblem as IProblem }
     }
     catch (err) {
-        console.log(err);
         return { status: false, message: "Unknown error" }
     }
 }

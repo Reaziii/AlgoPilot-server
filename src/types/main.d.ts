@@ -93,7 +93,10 @@ export interface ISubmission {
     submission_time: Date;
     user: string;
     problemSlug: string;
-    status: { status: number, color: string, text: string };
+    status: { status: number, color: string, text: string, memory:number, time:number };
+    testcases : { status: number, color: string, text: string, tcid:string, memory:number, time:number }[];
+    memory: number;
+    time: number;
 }
 
 export interface IContestSubmission {
@@ -131,4 +134,13 @@ export interface ISubmissionQueue {
     time : number;
     slug:string;
     running:boolean;
+}
+
+export interface IStandings {
+   email:string;
+   name:string;
+   cid:string;
+   position:number;
+   status : boolean;
+   delay: number;
 }

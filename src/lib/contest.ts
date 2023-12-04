@@ -58,7 +58,6 @@ export const create_contest = async (name: string | undefined, date: string | un
 
     }
     catch (err) {
-        console.log(err);
         return { status: false, message: "Unknown error" }
     }
 }
@@ -138,6 +137,7 @@ export const checkImAuthor = async (slug: string, email: string): Promise<{ stat
 
 export const add_problem = async (contest: string, email: string, problems: { slug: string, position: number }[]): Promise<boolean> => {
     try {
+        await ContestProblemModel.deleteMany({ contestSlug: contest })
         let Contest = await ContestModel.findOne({ slug: contest })
         if (!Contest) throw "";
         let author = await AuthorModel.findOne({ email: email, slug: Contest.slug });
@@ -158,7 +158,6 @@ export const add_problem = async (contest: string, email: string, problems: { sl
         }
         return true;
     } catch (err) {
-        console.log(err);
         return false;
     }
 }
@@ -207,11 +206,9 @@ export const get_problems = async (contest: string, email: string): Promise<{ pr
             }
         }
         ret = ret.map(item => ({ ...item, customChecker: "", enableCustomChecker: false, position: item.position, statement: "", inputFormat: "", outputFormat: "" }));
-        console.log(ret);
         return { problems: ret }
     }
     catch (err) {
-        console.log(err)
         return { problems: [] }
     }
 }
@@ -245,7 +242,6 @@ export const my_contests = async (email: string): Promise<{ contests: IContest[]
         })
         return { contests: contest }
     } catch (err) {
-        console.log(err);
         return { contests: [] };
     }
 }
@@ -381,7 +377,6 @@ export const submit_contest_problem_solution = async (slug: string, position: nu
         return { status: true, id: submission }
 
     } catch (err) {
-        console.log(err);
         return { status: false };
     }
 }

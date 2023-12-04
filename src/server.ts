@@ -12,6 +12,7 @@ import submissionRoute from './routes/submission'
 import { Server } from 'socket.io'
 import judgeservers from './sockets/judgeservers';
 import judgeRoutes from './routes/judgeserver'
+import submissionSocket from './sockets/submission';
 // app
 const app = express();
 dotenv.config();
@@ -26,7 +27,6 @@ mongoose.connect(process.env.DB ?? "").then(() => {
     console.log("[database connected]")
 }).catch(err => {
     console.log("database connection failed")
-    console.log(err);
 
 })
 
@@ -49,9 +49,21 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 
+
+
+
 //sockets
 const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'], }, });
 judgeservers.addServerIO(io)
+submissionSocket.addIoServer(io);
+
+
+//heart bit
+let x = setInterval(() => {
+    judgeservers.bitTheHeart();
+}, 30000)
+
+
 
 
 server.listen(port, () => {

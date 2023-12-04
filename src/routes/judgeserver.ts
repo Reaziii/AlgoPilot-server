@@ -1,7 +1,7 @@
 import express, { Response } from 'express'
 import judgecheck from '../middlewares/judgecheck';
 import { AuthenticatedRequest } from '../types/main';
-import { getLastSubmissionFromQueue } from '../lib/submissionQueue';
+import { getLastSubmissionFromQueue, get_submission } from '../lib/submissionQueue';
 const router = express();
 
 
@@ -12,9 +12,9 @@ router.post("/", judgecheck, (req: AuthenticatedRequest, res: Response) => {
 })
 
 
-router.post("/verdict/:subid/:tcid", (req:AuthenticatedRequest, res:Response)=>{
-    console.log(req.body)
-    return res.status(200).send({success : true})
+router.post("/verdict/:subid/:tcid", async (req: AuthenticatedRequest, res: Response) => {
+    await get_submission(req.params.subid, req.params.tcid, req.body);
+    return res.status(200).send({ success: true })
 
 })
 

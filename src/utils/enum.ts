@@ -41,6 +41,11 @@ export class SubmittedStatus {
         color: "orange",
         text: "Running"
     }
+    static Skipped: { status: number, color: string, text: string } = {
+        status: 9,
+        color: "black",
+        text: "Skipped"
+    }
     static get(idx: number): SubmissionStatus {
         if (idx === 1) return SubmittedStatus.TLE;
         if (idx === 2) return SubmittedStatus.MLE;
@@ -50,6 +55,7 @@ export class SubmittedStatus {
         if (idx === 6) return SubmittedStatus.WA;
         if (idx === 7) return SubmittedStatus.Pending;
         if (idx === 8) return SubmittedStatus.Running;
+        if (idx === 9) return SubmittedStatus.Skipped;
         throw "Submission status code is not correct"
     }
 

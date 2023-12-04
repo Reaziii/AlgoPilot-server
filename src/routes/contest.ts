@@ -5,6 +5,7 @@ import { add_problem, all_published_contest, changePublishMoode, checkImAuthor, 
 import addauthtorequest from '../middlewares/addauthtorequest';
 import { addNewServerTokens, deleteAServer, getAllServerOfAContest } from '../lib/judgeserver';
 import jwt from 'jsonwebtoken'
+import { getStandings } from '../lib/standings';
 const router = express.Router();
 
 router.post("/create", authcheck, (req: AuthenticatedRequest, res: Response) => {
@@ -108,6 +109,10 @@ router.delete("/judgeserver/:slug/:id", authcheck, async (req: AuthenticatedRequ
         return res.status(404).send(null);
     }
     deleteAServer(req.params.id).then(result => res.send(result))
+})
+
+router.get("/standings/:slug", (req: Request, res: Response) => {
+    getStandings(req.params.slug).then(result => res.send(result))
 })
 
 export default router;
