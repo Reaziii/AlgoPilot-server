@@ -2,7 +2,6 @@ import ProblemModel from "../models/problem";
 import SubmissionModel from "../models/submission";
 import SubmissionQueueModel from "../models/submissionQueue"
 import TestcaseModel from "../models/testcase";
-import { ITestcase } from "../types/main";
 import { SubmittedStatus } from "../utils/enum";
 import { addDateAndTime, get_current_time } from "../utils/utils"
 import submissionSocket from '../sockets/submission'
@@ -40,6 +39,12 @@ export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status
             id: item._id
         }));
         lastsub.running = true;
+
+        setTimeout(async () => {
+            let temp = await SubmissionQueueModel.findById(lastsub?._id);
+            if (!temp) return;
+            if (temp.running === true) temp.running = false;
+        }, 600000);
         await lastsub.save();
         return {
             status: true,
@@ -52,7 +57,6 @@ export const getLastSubmissionFromQueue = async (slug: string): Promise<{ status
                 timelimit: problem.timelimit,
                 memorylimit: problem.memorylimit,
                 language: submission.language
-
             }
         }
     } catch (err) {
@@ -69,8 +73,6 @@ export const contest_final_submission = async (subid: string, status: boolean) =
     }
     let contest = await ContestModel.findOne({ slug: contest_sub.contsetSlug });
     if (!contest) return;
-    console.log(subid)
-
     let check = await getContestSatus(contest.slug);
     if (check !== "running") return;
     let user = await UserModel.findOne({ email: contest_sub.user });
@@ -80,7 +82,6 @@ export const contest_final_submission = async (subid: string, status: boolean) =
     delay /= 60;
     delay = Math.floor(delay);
     let find = await StandingsModel.findOne({ cid: contest.slug, status: true, email: contest_sub.user, position: contest_sub.position });
-    console.log(find);
     if (find) return;
     let standing = new StandingsModel({
         email: user?.email,
@@ -120,10 +121,8 @@ export const get_submission = async (sub_id: string, tcid: string, status: { sta
         }
         else if (statuscode === 100) {
             let status = submission.status;
-
             contest_final_submission(sub_id, status.status === SubmittedStatus.AC.status);
-
-
+            ContestSubmissionModel.deleteOne({ _id: submission._id })
             submissionSocket.tellFinalSubmissionStatus(sub_id, submission.status);
             return;
         }
